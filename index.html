@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบซื้อตั๋วหนังออนไลน์</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Kanit', sans-serif;
+        }
+        
+        .movie-card {
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+        
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .seat {
+            transition: all 0.2s ease;
+        }
+        
+        .seat:hover:not(.occupied) {
+            transform: scale(1.1);
+        }
+        
+        .ticket {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .ticket::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 30px;
+            width: 50px;
+            height: 25px;
+            background: #f5f7fa;
+            border-radius: 0 0 50px 50px;
+        }
+        
+        .ticket::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 30px;
+            width: 50px;
+            height: 25px;
+            background: #f5f7fa;
+            border-radius: 50px 50px 0 0;
+        }
+        
+        .screen {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.2) 100%);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: perspective(300px) rotateX(10deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-900 to-purple-800 text-white py-6 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-film text-3xl"></i>
+                    <h1 class="text-3xl font-bold">ระบบซื้อตั๋วหนังออนไลน์</h1>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <span class="text-yellow-300"><i class="fas fa-star"></i> หนังยอดนิยม</span>
+                    <span class="text-pink-300"><i class="fas fa-heart"></i> หนังมาใหม่</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Movie Selection Section -->
+        <div id="movie-selection">
+            <!-- Search and Filter -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="search" placeholder="ค้นหาหนัง..." 
+                            class="pl-10 w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                    </div>
+                    <button id="search-btn" class="bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-search mr-2"></i> ค้นหา
+                    </button>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="category-btn active px-4 py-2 rounded-full bg-purple-600 text-white" data-category="all">
+                        <i class="fas fa-list mr-1"></i> ทั้งหมด
+                    </button>
+                    <button class="category-btn px-4 py-2 rounded-full bg-red-100 text-red-800 hover:bg-red-200" data-category="action">
+                        <i class="fas fa-explosion mr-1"></i> แอคชั่น
+                    </button>
+                    <button class="category-btn px-4 py-2 rounded-full bg-yellow-100 text-yellow-800 hover:bg-yellow-200" data-category="comedy">
+                        <i class="fas fa-laugh-squint mr-1"></i> คอมเมดี้
+                    </button>
+                    <button class="category-btn px-4 py-2 rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200" data-category="drama">
+                        <i class="fas fa-theater-masks mr-1"></i> ดราม่า
+                    </button>
+                    <button class="category-btn px-4 py-2 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200" data-category="horror">
+                        <i class="fas fa-ghost mr-1"></i> สยองขวัญ
+                    </button>
+                    <button class="category-btn px-4 py-2 rounded-full bg-green-100 text-green-800 hover:bg-green-200" data-category="sci-fi">
+                        <i class="fas fa-robot mr-1"></i> ไซไฟ
+                    </button>
+                </div>
+                
+                <div class="flex items-center text-sm text-gray-500">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <span>กำลังฉายทั้งหมด <span id="movie-count" class="font-bold">8</span> เรื่อง</span>
+                </div>
+            </div>
+            
+            <!-- Movie Gallery -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6" id="movie-gallery">
+                <!-- Movie cards will be generated here -->
+            </div>
+        </div>
+
+        <!-- Booking Section -->
+        <div class="hidden bg-white rounded-xl shadow-xl overflow-hidden mb-8" id="booking-section">
+            <div class="md:flex">
+                <!-- Movie Info -->
+                <div class="md:w-1/3 bg-gray-800 p-6 text-white">
+                    <div class="flex flex-col items-center">
+                        <img id="booking-poster" class="w-full h-64 md:h-80 object-cover rounded-lg mb-4 shadow-lg" src="" alt="Movie Poster">
+                        <h2 class="text-2xl font-bold mb-2 text-center" id="booking-title"></h2>
+                        <span id="booking-category" class="inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4"></span>
+                        <div class="flex items-center text-yellow-400 mb-2">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                            <span class="ml-2 text-white">4.5/5</span>
+                        </div>
+                        <p class="text-gray-300 text-center mb-4">ความยาว: 2ชม. 30นาที</p>
+                        <button id="back-to-movies" class="text-purple-300 hover:text-purple-100 flex items-center">
+                            <i class="fas fa-arrow-left mr-2"></i> กลับไปเลือกหนัง
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Booking Form -->
+                <div class="md:w-2/3 p-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-ticket-alt text-purple-600 mr-3"></i> จองตั๋วหนัง
+                    </h3>
+                    
+                    <form id="booking-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label for="theater" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-building mr-2 text-purple-600"></i>โรงภาพยนตร์
+                                </label>
+                                <select id="theater" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" required>
+                                    <option value="">เลือกโรงภาพยนตร์</option>
+                                    <option value="central-bangna">เซ็นทรัล บางนา</option>
+                                    <option value="siam-paragon">สยามพารากอน</option>
+                                    <option value="central-world">เซ็นทรัลเวิลด์</option>
+                                    <option value="terminal-21">เทอร์มินอล 21</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="date" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-calendar-day mr-2 text-purple-600"></i>วันที่
+                                </label>
+                                <input type="date" id="date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" required>
+                            </div>
+                            
+                            <div>
+                                <label for="time" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-clock mr-2 text-purple-600"></i>เวลา
+                                </label>
+                                <select id="time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" required>
+                                    <option value="">เลือกรอบฉาย</option>
+                                    <option value="10:00">10:00 น.</option>
+                                    <option value="13:00">13:00 น.</option>
+                                    <option value="16:00">16:00 น.</option>
+                                    <option value="19:00">19:00 น.</option>
+                                    <option value="22:00">22:00 น.</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="ticket-type" class="block text-gray-700 font-medium mb-2">
+                                    <i class="fas fa-user-tag mr-2 text-purple-600"></i>ประเภทตั๋ว
+                                </label>
+                                <select id="ticket-type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                                    <option value="normal">ปกติ - ฿180</option>
+                                    <option value="student">นักเรียน - ฿120</option>
+                                    <option value="senior">ผู้สูงอายุ - ฿100</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Seat Selection -->
+                        <div class="mb-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-couch mr-2 text-purple-600"></i>เลือกที่นั่ง
+                                </h4>
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-gray-200 rounded mr-2"></div>
+                                        <span class="text-sm">ว่าง</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                                        <span class="text-sm">เลือกแล้ว</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                                        <span class="text-sm">ไม่ว่าง</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="screen text-center py-2 mb-6 text-gray-800 font-bold tracking-wider">
+                                หน้าจอภาพยนตร์
+                            </div>
+                            
+                            <div class="grid grid-cols-10 gap-2 mb-6" id="seats-grid">
+                                <!-- Seats will be generated here -->
+                            </div>
+                            
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-gray-600">ที่นั่งที่เลือก:</p>
+                                        <p id="selected-seats" class="font-semibold">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">จำนวน:</p>
+                                        <p id="seat-count" class="font-semibold">0 ที่นั่ง</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-600">รวม:</p>
+                                        <p id="total-price" class="font-semibold text-purple-600">฿0</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-4 px-6 rounded-lg font-bold text-lg transition duration-300">
+                            <i class="fas fa-ticket-alt mr-2"></i> ยืนยันการจองตั๋ว
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Section -->
+        <div class="hidden max-w-2xl mx-auto" id="ticket">
+            <div class="ticket p-0 overflow-hidden">
+                <div class="bg-gradient-to-r from-purple-800 to-indigo-700 p-6 text-white text-center">
+                    <h2 class="text-3xl font-bold mb-2">ตั๋วหนัง</h2>
+                    <p class="text-purple-200">ขอบคุณที่ใช้บริการของเรา</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="flex justify-center mb-6">
+                        <img id="ticket-poster" class="w-full h-48 object-cover rounded-lg shadow-md" src="" alt="Movie Poster">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <p class="text-gray-500 text-sm">ชื่อหนัง</p>
+                            <p id="ticket-movie" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">โรงภาพยนตร์</p>
+                            <p id="ticket-theater" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">วันที่</p>
+                            <p id="ticket-date" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-sm">เวลา</p>
+                            <p id="ticket-time" class="text-lg font-semibold"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                        <p class="text-gray-500 text-sm mb-2">ที่นั่ง</p>
+                        <p id="ticket-seats" class="text-xl font-bold text-purple-600"></p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <p class="text-gray-500 text-sm">เลขที่อ้างอิง</p>
+                            <p id="ticket-ref" class="font-mono font-bold">REF-2023-XXXX</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-500 text-sm">วันที่ออกตั๋ว</p>
+                            <p id="ticket-issue-date" class="font-semibold"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t-2 border-dashed border-gray-300 pt-4 text-center">
+                        <p class="text-sm text-gray-500 mb-4">กรุณาแสดง QR Code นี้ที่โรงภาพยนตร์</p>
+                        <div class="flex justify-center mb-6">
+                            <div class="w-32 h-32 bg-white border-2 border-gray-300 flex items-center justify-center">
+                                <i class="fas fa-qrcode text-4xl text-gray-400"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500">*ตั๋วหนังนี้สามารถใช้ได้ครั้งเดียวเท่านั้น</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-100 p-6 text-center">
+                    <button id="back-btn" class="bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-medium transition duration-300 inline-flex items-center">
+                        <i class="fas fa-home mr-2"></i> กลับสู่หน้าหลัก
+                    </button>
+                    <button id="print-btn" class="ml-4 bg-white hover:bg-gray-200 text-purple-600 border border-purple-600 py-3 px-6 rounded-lg font-medium transition duration-300 inline-flex items-center">
+                        <i class="fas fa-print mr-2"></i> พิมพ์ตั๋ว
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-film mr-2"></i> ระบบซื้อตั๋วหนัง
+                    </h3>
+                    <p class="text-gray-300">ระบบซื้อตั๋วหนังออนไลน์ที่ทันสมัยที่สุดในประเทศไทย</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">เมนู</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">หน้าหลัก</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">หนังที่กำลังฉาย</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">หนังที่กำลังจะมา</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">โปรโมชั่น</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">ติดต่อเรา</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center"><i class="fas fa-phone-alt mr-2 text-gray-300"></i> 02-123-4567</li>
+                        <li class="flex items-center"><i class="fas fa-envelope mr-2 text-gray-300"></i> contact@movieticket.com</li>
+                        <li class="flex items-center"><i class="fas fa-map-marker-alt mr-2 text-gray-300"></i> กรุงเทพมหานคร</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">ติดตามเรา</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>© 2023 ระบบซื้อตั๋วหนังออนไลน์. สงวนลิขสิทธิ์.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Sample movie data
+        const movies = [
+            {
+                id: 1,
+                title: "Avengers: Endgame",
+                category: "action",
+                poster: "https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_.jpg",
+                duration: "3ชม. 1นาที",
+                rating: 4.8
+            },
+            {
+                id: 2,
+                title: "Joker",
+                category: "drama",
+                poster: "https://m.media-amazon.com/images/M/MV5BNGVjNWI4ZGUtNzE0MS00YTJmLWE0ZDctN2ZiYTk2YmI3NTYyXkEyXkFqcGdeQXVyMTkxNjUyNQ@@._V1_.jpg",
+                duration: "2ชม. 2นาที",
+                rating: 4.3
+            },
+            {
+                id: 3,
+                title: "The Conjuring",
+                category: "horror",
+                poster: "https://m.media-amazon.com/images/M/MV5BMTM3NjA1NDMyMV5BMl5BanBnXkFtZTcwMDQzNDMzOQ@@._V1_.jpg",
+                duration: "1ชม. 52นาที",
+                rating: 4.0
+            },
+            {
+                id: 4,
+                title: "Inception",
+                category: "sci-fi",
+                poster: "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg",
+                duration: "2ชม. 28นาที",
+                rating: 4.5
+            },
+            {
+                id: 5,
+                title: "The Hangover",
+                category: "comedy",
+                poster: "https://m.media-amazon.com/images/M/MV5BNGQwZjg5YmYtY2VkNC00NzliLTljYTctNzI5ZDhlY2ZmYmRkXkEyXkFqcGdeQXVyNzkwMjQ5NzM@._V1_.jpg",
+                duration: "1ชม. 40นาที",
+                rating: 3.9
+            },
+            {
+                id: 6,
+                title: "John Wick",
+                category: "action",
+                poster: "https://m.media-amazon.com/images/M/MV5BMTU2NjA1ODgzMF5BMl5BanBnXkFtZTgwMTM2MTI4MjE@._V1_.jpg",
+                duration: "1ชม. 41นาที",
+                rating: 4.2
+            },
+            {
+                id: 7,
+                title: "Parasite",
+                category: "drama",
+                poster: "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_.jpg",
+                duration: "2ชม. 12นาที",
+                rating: 4.6
+            },
+            {
+                id: 8,
+                title: "Interstellar",
+                category: "sci-fi",
+                poster: "https://m.media-amazon.com/images/M/MV5BZjdkOTU3MDktN2IxOS00OGEyLWFmMjktY2FiMmZkNWIyODZiXkEyXkFqcGdeQXVyMTMxODk2OTU@._V1_.jpg",
+                duration: "2ชม. 49นาที",
+                rating: 4.7
+            }
+        ];
+
+        // DOM elements
+        const movieGallery = document.getElementById('movie-gallery');
+        const bookingSection = document.getElementById('booking-section');
+        const ticketSection = document.getElementById('ticket');
+        const searchInput = document.getElementById('search');
+        const searchBtn = document.getElementById('search-btn');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const backBtn = document.getElementById('back-btn');
+        const backToMoviesBtn = document.getElementById('back-to-movies');
+        const printBtn = document.getElementById('print-btn');
+        const movieCount = document.getElementById('movie-count');
+        const selectedSeatsDisplay = document.getElementById('selected-seats');
+        const seatCountDisplay = document.getElementById('seat-count');
+        const totalPriceDisplay = document.getElementById('total-price');
+
+        // Prices
+        const ticketPrices = {
+            normal: 180,
+            student: 120,
+            senior: 100
+        };
+
+        // Initialize the app
+        function init() {
+            renderMovies(movies);
+            setupEventListeners();
+            updateMovieCount(movies.length);
+        }
+
+        // Render movies to the gallery
+        function renderMovies(moviesToRender) {
+            movieGallery.innerHTML = '';
+            
+            moviesToRender.forEach(movie => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.dataset.id = movie.id;
+                movieCard.dataset.category = movie.category;
+                
+                // Generate star rating
+                const stars = generateStars(movie.rating);
+                
+                movieCard.innerHTML = `
+                    <div class="h-full flex flex-col">
+                        <img src="${movie.poster}" alt="${movie.title}" class="w-full h-64 object-cover rounded-t-lg">
+                        <div class="bg-white p-4 rounded-b-lg flex-grow">
+                            <h3 class="text-lg font-bold mb-1 line-clamp-1">${movie.title}</h3>
+                            <span class="inline-block px-2 py-1 text-xs rounded-full ${getCategoryColor(movie.category)} mb-2">
+                                ${getCategoryName(movie.category)}
+                            </span>
+                            <div class="flex items-center text-yellow-400 mb-1">
+                                ${stars}
+                                <span class="ml-1 text-gray-600 text-sm">${movie.rating.toFixed(1)}</span>
+                            </div>
+                            <p class="text-gray-500 text-sm">${movie.duration}</p>
+                            <button class="mt-3 w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition duration-300">
+                                <i class="fas fa-ticket-alt mr-1"></i> จองตั๋ว
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                movieGallery.appendChild(movieCard);
+            });
+        }
+
+        // Generate star rating HTML
+        function generateStars(rating) {
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star"></i>';
+            }
+            
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt"></i>';
+            }
+            
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star"></i>';
+            }
+            
+            return stars;
+        }
+
+        // Get category name in Thai
+        function getCategoryName(category) {
+            const categories = {
+                'action': 'แอคชั่น',
+                'comedy': 'คอมเมดี้',
+                'drama': 'ดราม่า',
+                'horror': 'สยองขวัญ',
+                'sci-fi': 'ไซไฟ'
+            };
+            return categories[category] || category;
+        }
+
+        // Get category color classes
+        function getCategoryColor(category) {
+            const colors = {
+                'action': 'bg-red-100 text-red-800',
+                'comedy': 'bg-yellow-100 text-yellow-800',
+                'drama': 'bg-blue-100 text-blue-800',
+                'horror': 'bg-gray-100 text-gray-800',
+                'sci-fi': 'bg-green-100 text-green-800'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Movie card click
+            movieGallery.addEventListener('click', (e) => {
+                const movieCard = e.target.closest('.movie-card');
+                if (movieCard) {
+                    const movieId = parseInt(movieCard.dataset.id);
+                    const movie = movies.find(m => m.id === movieId);
+                    showBookingSection(movie);
+                }
+            });
+
+            // Category filter
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    const category = btn.dataset.category;
+                    filterMovies(category);
+                });
+            });
+
+            // Search
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+                
+                filterMovies(activeCategory, searchTerm);
+            });
+
+            // Search button
+            searchBtn.addEventListener('click', () => {
+                const searchTerm = searchInput.value.toLowerCase();
+                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+                
+                filterMovies(activeCategory, searchTerm);
+            });
+
+            // Booking form submit
+            document.getElementById('booking-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                generateTicket();
+            });
+
+            // Back button (to home)
+            backBtn.addEventListener('click', () => {
+                ticketSection.style.display = 'none';
+                document.getElementById('movie-selection').style.display = 'block';
+            });
+
+            // Back to movies button
+            backToMoviesBtn.addEventListener('click', () => {
+                bookingSection.style.display = 'none';
+                document.getElementById('movie-selection').style.display = 'block';
+            });
+
+            // Print button
+            printBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // Initialize seats
+            generateSeats();
+
+            // Ticket type change
+            document.getElementById('ticket-type').addEventListener('change', updateSeatSelection);
+        }
+
+        // Filter movies by category and search term
+        function filterMovies(category, searchTerm = '') {
+            let filteredMovies = movies;
+
+            if (category !== 'all') {
+                filteredMovies = filteredMovies.filter(movie => movie.category === category);
+            }
+
+            if (searchTerm) {
+                filteredMovies = filteredMovies.filter(movie => 
+                    movie.title.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderMovies(filteredMovies);
+            updateMovieCount(filteredMovies.length);
+        }
+
+        // Update movie count display
+        function updateMovieCount(count) {
+            movieCount.textContent = count;
+        }
+
+        // Show booking section with selected movie
+        function showBookingSection(movie) {
+            document.getElementById('movie-selection').style.display = 'none';
+            bookingSection.style.display = 'block';
+
+            document.getElementById('booking-poster').src = movie.poster;
+            document.getElementById('booking-title').textContent = movie.title;
+            
+            const categoryElement = document.getElementById('booking-category');
+            categoryElement.textContent = getCategoryName(movie.category);
+            categoryElement.className = `inline-block px-3 py-1 rounded-full text-sm font-semibold ${getCategoryColor(movie.category)}`;
+
+            // Set tomorrow as default date
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('date').valueAsDate = tomorrow;
+
+            // Reset form
+            document.getElementById('theater').selectedIndex = 0;
+            document.getElementById('time').selectedIndex = 0;
+            document.getElementById('ticket-type').selectedIndex = 0;
+            
+            // Reset seats
+            generateSeats();
+        }
+
+        // Generate seats for booking
+        function generateSeats() {
+            const seatsGrid = document.getElementById('seats-grid');
+            seatsGrid.innerHTML = '';
+
+            // Generate 50 seats (5 rows x 10 seats)
+            for (let i = 0; i < 50; i++) {
+                const seat = document.createElement('div');
+                seat.className = 'seat flex items-center justify-center cursor-pointer';
+                seat.dataset.seat = String.fromCharCode(65 + Math.floor(i / 10)) + (i % 10 + 1);
+
+                // Randomly mark some seats as occupied (for demo)
+                if (Math.random() < 0.2) {
+                    seat.classList.add('bg-red-500', 'text-white', 'occupied');
+                    seat.classList.remove('cursor-pointer');
+                    seat.innerHTML = '<i class="fas fa-times"></i>';
+                } else {
+                    seat.classList.add('bg-gray-200', 'hover:bg-gray-300');
+                    seat.textContent = seat.dataset.seat;
+                }
+
+                seat.addEventListener('click', () => {
+                    if (!seat.classList.contains('occupied')) {
+                        seat.classList.toggle('bg-green-500');
+                        seat.classList.toggle('text-white');
+                        seat.classList.toggle('selected');
+                        updateSeatSelection();
+                    }
+                });
+
+                seatsGrid.appendChild(seat);
+            }
+        }
+
+        // Update seat selection display
+        function updateSeatSelection() {
+            const selectedSeats = Array.from(document.querySelectorAll('.seat.selected'))
+                .map(seat => seat.dataset.seat);
+            
+            const seatCount = selectedSeats.length;
+            const ticketType = document.getElementById('ticket-type').value;
+            const pricePerSeat = ticketPrices[ticketType] || 180;
+            const totalPrice = seatCount * pricePerSeat;
+            
+            selectedSeatsDisplay.textContent = selectedSeats.join(', ') || '-';
+            seatCountDisplay.textContent = `${seatCount} ที่นั่ง`;
+            totalPriceDisplay.textContent = `฿${totalPrice}`;
+        }
+
+        // Generate ticket
+        function generateTicket() {
+            const movieTitle = document.getElementById('booking-title').textContent;
+            const poster = document.getElementById('booking-poster').src;
+            const theater = document.getElementById('theater').options[document.getElementById('theater').selectedIndex].text;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').options[document.getElementById('time').selectedIndex].text;
+            const ticketType = document.getElementById('ticket-type').options[document.getElementById('ticket-type').selectedIndex].text;
+
+            // Get selected seats
+            const selectedSeats = Array.from(document.querySelectorAll('.seat.selected'))
+                .map(seat => seat.dataset.seat)
+                .join(', ');
+
+            if (!selectedSeats) {
+                alert('กรุณาเลือกที่นั่ง');
+                return;
+            }
+
+            // Calculate total price
+            const seatCount = Array.from(document.querySelectorAll('.seat.selected')).length;
+            const pricePerSeat = ticketPrices[document.getElementById('ticket-type').value] || 180;
+            const totalPrice = seatCount * pricePerSeat;
+
+            // Generate reference number
+            const refNumber = `REF-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+            // Display ticket
+            bookingSection.style.display = 'none';
+            ticketSection.style.display = 'block';
+
+            document.getElementById('ticket-poster').src = poster;
+            document.getElementById('ticket-movie').textContent = movieTitle;
+            document.getElementById('ticket-theater').textContent = theater;
+            document.getElementById('ticket-date').textContent = formatDate(date);
+            document.getElementById('ticket-time').textContent = time;
+            document.getElementById('ticket-seats').textContent = selectedSeats;
+            document.getElementById('ticket-ref').textContent = refNumber;
+            document.getElementById('ticket-issue-date').textContent = formatDate(new Date());
+        }
+
+        // Format date to Thai format
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            return date.toLocaleDateString('th-TH', options);
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
